@@ -1,0 +1,111 @@
+-- ============================================================
+-- RETAIL DATA WAREHOUSE - RAW TABLE DDL
+-- ============================================================
+
+-- 1. DATE TABLE (Dimension)
+CREATE OR REPLACE TABLE RAW_DATE (
+    DATE_KEY            INT            NOT NULL PRIMARY KEY,
+    FULL_DATE           DATE           NOT NULL,
+    DAY_OF_WEEK         TINYINT        NOT NULL,
+    DAY_NAME            VARCHAR(10)    NOT NULL,
+    DAY_OF_MONTH        TINYINT        NOT NULL,
+    DAY_OF_YEAR         SMALLINT       NOT NULL,
+    WEEK_OF_YEAR        TINYINT        NOT NULL,
+    MONTH_NUMBER        TINYINT        NOT NULL,
+    MONTH_NAME          VARCHAR(10)    NOT NULL,
+    QUARTER             TINYINT        NOT NULL,
+    YEAR                SMALLINT       NOT NULL,
+    IS_WEEKEND          BOOLEAN        NOT NULL,
+    IS_HOLIDAY          BOOLEAN        NOT NULL DEFAULT FALSE,
+    FISCAL_QUARTER      TINYINT        NOT NULL,
+    FISCAL_YEAR         SMALLINT       NOT NULL
+);
+
+-- 2. STORE TABLE
+CREATE OR REPLACE TABLE RAW_STORE (
+    STORE_ID            INT            NOT NULL PRIMARY KEY,
+    STORE_NAME          VARCHAR(100)   NOT NULL,
+    STORE_TYPE          VARCHAR(30)    NOT NULL,
+    ADDRESS             VARCHAR(200)   NOT NULL,
+    CITY                VARCHAR(50)    NOT NULL,
+    STATE               VARCHAR(50)    NOT NULL,
+    ZIP_CODE            VARCHAR(10)    NOT NULL,
+    COUNTRY             VARCHAR(50)    NOT NULL DEFAULT 'United States',
+    REGION              VARCHAR(30)    NOT NULL,
+    PHONE               VARCHAR(20),
+    MANAGER_NAME        VARCHAR(100),
+    OPEN_DATE           DATE           NOT NULL,
+    SQUARE_FOOTAGE      INT,
+    IS_ACTIVE           BOOLEAN        NOT NULL DEFAULT TRUE
+);
+
+-- 3. CUSTOMER TABLE
+CREATE OR REPLACE TABLE RAW_CUSTOMER (
+    CUSTOMER_ID         INT            NOT NULL PRIMARY KEY,
+    FIRST_NAME          VARCHAR(50)    NOT NULL,
+    LAST_NAME           VARCHAR(50)    NOT NULL,
+    EMAIL               VARCHAR(100),
+    PHONE               VARCHAR(20),
+    DATE_OF_BIRTH       DATE,
+    GENDER              VARCHAR(10),
+    ADDRESS             VARCHAR(200),
+    CITY                VARCHAR(50),
+    STATE               VARCHAR(50),
+    ZIP_CODE            VARCHAR(10),
+    COUNTRY             VARCHAR(50)    DEFAULT 'United States',
+    LOYALTY_TIER        VARCHAR(20)    DEFAULT 'Standard',
+    REGISTRATION_DATE   DATE           NOT NULL,
+    IS_ACTIVE           BOOLEAN        NOT NULL DEFAULT TRUE
+);
+
+-- 4. EMPLOYEE TABLE
+CREATE OR REPLACE TABLE RAW_EMPLOYEE (
+    EMPLOYEE_ID         INT            NOT NULL PRIMARY KEY,
+    FIRST_NAME          VARCHAR(50)    NOT NULL,
+    LAST_NAME           VARCHAR(50)    NOT NULL,
+    EMAIL               VARCHAR(100)   NOT NULL,
+    PHONE               VARCHAR(20),
+    HIRE_DATE           DATE           NOT NULL,
+    JOB_TITLE           VARCHAR(50)    NOT NULL,
+    DEPARTMENT          VARCHAR(50)    NOT NULL,
+    STORE_ID            INT            NOT NULL,
+    SALARY              DECIMAL(10,2),
+    IS_ACTIVE           BOOLEAN        NOT NULL DEFAULT TRUE,
+    CONSTRAINT FK_EMPLOYEE_STORE FOREIGN KEY (STORE_ID) REFERENCES RAW_STORE(STORE_ID)
+);
+
+-- 5. PRODUCT TABLE
+CREATE OR REPLACE TABLE RAW_PRODUCT (
+    PRODUCT_ID          INT            NOT NULL PRIMARY KEY,
+    PRODUCT_NAME        VARCHAR(150)   NOT NULL,
+    CATEGORY            VARCHAR(50)    NOT NULL,
+    SUB_CATEGORY        VARCHAR(50)    NOT NULL,
+    BRAND               VARCHAR(50)    NOT NULL,
+    UNIT_PRICE          DECIMAL(10,2)  NOT NULL,
+    UNIT_COST           DECIMAL(10,2)  NOT NULL,
+    SKU                 VARCHAR(30)    NOT NULL,
+    WEIGHT_KG           DECIMAL(6,2),
+    SUPPLIER            VARCHAR(100),
+    IS_ACTIVE           BOOLEAN        NOT NULL DEFAULT TRUE
+);
+
+-- 6. SALES TABLE (Fact)
+CREATE OR REPLACE TABLE RAW_SALES (
+    SALE_ID             INT            NOT NULL PRIMARY KEY,
+    DATE_KEY            INT            NOT NULL,
+    CUSTOMER_ID         INT            NOT NULL,
+    EMPLOYEE_ID         INT            NOT NULL,
+    STORE_ID            INT            NOT NULL,
+    PRODUCT_ID          INT            NOT NULL,
+    QUANTITY            INT            NOT NULL,
+    UNIT_PRICE          DECIMAL(10,2)  NOT NULL,
+    DISCOUNT_PERCENT    DECIMAL(5,2)   DEFAULT 0,
+    TOTAL_AMOUNT        DECIMAL(12,2)  NOT NULL,
+    PAYMENT_METHOD      VARCHAR(20)    NOT NULL,
+    TRANSACTION_ID      VARCHAR(30)    NOT NULL,
+    CONSTRAINT FK_SALES_DATE     FOREIGN KEY (DATE_KEY)     REFERENCES RAW_DATE(DATE_KEY),
+    CONSTRAINT FK_SALES_CUSTOMER FOREIGN KEY (CUSTOMER_ID)  REFERENCES RAW_CUSTOMER(CUSTOMER_ID),
+    CONSTRAINT FK_SALES_EMPLOYEE FOREIGN KEY (EMPLOYEE_ID)  REFERENCES RAW_EMPLOYEE(EMPLOYEE_ID),
+    CONSTRAINT FK_SALES_STORE    FOREIGN KEY (STORE_ID)     REFERENCES RAW_STORE(STORE_ID),
+    CONSTRAINT FK_SALES_PRODUCT  FOREIGN KEY (PRODUCT_ID)   REFERENCES RAW_PRODUCT(PRODUCT_ID)
+);
